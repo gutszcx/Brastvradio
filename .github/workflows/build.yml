@@ -5,43 +5,78 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Gerar APK BrasTVRadio
+      - uses: android-actions/setup-android@v3
+      - name: Criar projeto Android WebView
         run: |
-          # Cria package.json se não existir
-          if [! -f package.json ]; then
-            echo '{"name":"brastvradio","version":"1.0.0","scripts":{"build":"echo ok"}}' > package.json
-          fi
-          # Instala Capacitor
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          # Cria pasta www com seu site
-          mkdir -p www
-          # Se tiver index.html na raiz, copia
-          cp -r *.html www/ 2>/dev/null || true
-          cp -r *.js www/ 2>/dev/null || true
-          cp -r *.css www/ 2>/dev/null || true
-          cp -r assets www/ 2>/dev/null || true
-          cp -r css www/ 2>/dev/null || true
-          cp -r js www/ 2>/dev/null || true
-          # Se não tiver nada, cria um index que abre seu site
-          if [! -f www/index.html ]; then
-            echo '<html><head><meta http-equiv="refresh" content="0; url=https://gutsZCX.github.io/Brastvradio/"></head><body>Carregando BrasTVRadio...</body></html>' > www/index.html
-          fi
-          # Inicia Capacitor
-          npx cap init BrasTVRadio com.brastvradio.app --web-dir=www || true
-          npx cap add android || true
-          npx cap copy android || true
+          mkdir -p android/app/src/main/java/com/brastvradio/app
+          mkdir -p android/app/src/main/res/values
+          cat > android/settings.gradle << 'EOF'
+          include ':app'
+          EOF
+          cat > android/build.gradle << 'EOF'
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+          cat > android/app/build.gradle << 'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              compileSdk 34
+              namespace 'com.brastvradio.app'
+              defaultConfig {
+                  applicationId "com.brastvradio.app"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes { release { minifyEnabled false } debug { minifyEnabled false } }
+          }
+          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1' }
+          EOF
+          cat > android/app/src/main/AndroidManifest.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application android:allowBackup="true" android:label="BrasTVRadio" android:theme="@android:style/Theme.NoTitleBar">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > android/app/src/main/java/com/brastvradio/app/MainActivity.java << 'EOF'
+          package com.brastvradio.app;
+          import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebViewClient;
+          public class MainActivity extends Activity {
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  WebView webView = new WebView(this);
+                  webView.getSettings().setJavaScriptEnabled(true);
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.loadUrl("https://gutszcx.github.io/Brastvradio/");
+                  setContentView(webView);
+              }
+          }
+          EOF
+          cat > android/gradle.properties << 'EOF'
+          android.useAndroidX=true
+          EOF
+      - name: Build APK
+        run: |
           cd android
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
+          unzip -q gradle-8.4-bin.zip
+          ./gradle-8.4/bin/gradle wrapper
           chmod +x gradlew
           ./gradlew assembleDebug
-      - name: Salvar APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: BrasTVRadio-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
