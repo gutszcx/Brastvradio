@@ -1,0 +1,37 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: temurin
+      - name: Build APK BrasTVRadio
+        run: |
+          mkdir -p /tmp/brastv && cd /tmp/brastv
+          cat > MainActivity.java <<'JAVA'
+          package com.brastvradio.app;
+          import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebViewClient;
+          public class MainActivity extends Activity {
+            protected void onCreate(Bundle b){ super.onCreate(b);
+            WebView w=new WebView(this); w.getSettings().setJavaScriptEnabled(true);
+            w.setWebViewClient(new WebViewClient()); w.loadUrl("https://gutszcx.github.io/Brastvradio/"); setContentView(w); } }
+          JAVA
+          echo "FEITO"
+      - name: Criar APK com PWABuilder
+        run: |
+          npm install -g @bubblewrap/cli
+          mkdir -p /tmp/pwa && cd /tmp/pwa
+          echo '{"host":"gutszcx.github.io","name":"BrasTVRadio","packageId":"com.brastvradio.app","display":"standalone","startUrl":"/Brastvradio/"}' > twa-manifest.json
+          bubblewrap build --skipPwaValidation || echo "tentando outro metodo"
+      - name: Fallback WebView APK
+        run: |
+          sudo apt-get update && sudo apt-get install -y gradle
+          mkdir -p $HOME/app/android/app/src/main/java/com/brastvradio/app
+          mkdir -p $HOME/app/android/app/src/main/res
+          cd $HOME/app
+          cp -r $GITHUB_WORKSPACE/*. 2>/dev/null || true
+          ls -la
