@@ -18,9 +18,12 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
@@ -43,6 +46,7 @@ class RadioPlaybackService : MediaSessionService() {
 
     private var player: ExoPlayer? = null
     private var mediaSession: MediaSession? = null
+    private var hasTriedBackup = false
 
     companion object {
         const val CHANNEL_ID = "brasil_radio_playback_channel"
@@ -115,7 +119,17 @@ class RadioPlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .build()
 
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setUserAgent("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(20000)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(httpDataSourceFactory)
+
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setAudioAttributes(audioAttributes, true) // Handles Audio Focus automatically
             .setHandleAudioBecomingNoisy(true) // Pauses when headphones unplugged
             .setWakeMode(C.WAKE_MODE_NETWORK) // Keeps WiFi/Network and CPU active when screen locked
@@ -136,6 +150,7 @@ class RadioPlaybackService : MediaSessionService() {
                             Player.STATE_READY -> {
                                 _isBuffering.value = false
                                 _errorMessage.value = null
+                                hasTriedBackup = false
                             }
                             Player.STATE_ENDED -> {
                                 _isBuffering.value = false
@@ -151,11 +166,14 @@ class RadioPlaybackService : MediaSessionService() {
                         _isBuffering.value = false
                         _isPlaying.value = false
                         val current = _currentRadio.value
-                        // Try fallback backup stream if available
-                        if (current?.backupStreamUrl != null && current.backupStreamUrl != current.streamUrl) {
-                            playStreamUrl(current.backupStreamUrl, current.name)
+                        val backup = current?.backupStreamUrl
+                        if (current != null && !hasTriedBackup && !backup.isNullOrBlank() && backup != current.streamUrl) {
+                            hasTriedBackup = true
+                            _errorMessage.value = "Tentando sinal alternativo..."
+                            playBackupStation(current)
                         } else {
-                            _errorMessage.value = "Erro ao reproduzir áudio da rádio. Tentando reconectar..."
+                            hasTriedBackup = false
+                            _errorMessage.value = "Emissora temporariamente fora do ar."
                         }
                         updateForegroundNotification()
                     }
@@ -228,6 +246,7 @@ class RadioPlaybackService : MediaSessionService() {
 
     private fun playStation(station: RadioStation) {
         val exo = player ?: return
+        hasTriedBackup = false
         try {
             exo.volume = _radioVolume.value
             val metadata = MediaMetadata.Builder()
@@ -237,30 +256,68 @@ class RadioPlaybackService : MediaSessionService() {
                 .setSubtitle(station.currentShow)
                 .build()
 
+            val mimeType = when {
+                station.streamUrl.contains(".m3u8", ignoreCase = true) -> MimeTypes.APPLICATION_M3U8
+                station.streamUrl.contains(".mpd", ignoreCase = true) -> MimeTypes.APPLICATION_MPD
+                station.streamUrl.contains(".aac", ignoreCase = true) -> MimeTypes.AUDIO_AAC
+                station.streamUrl.contains(".mp3", ignoreCase = true) -> MimeTypes.AUDIO_MPEG
+                else -> null
+            }
+
             val mediaItem = MediaItem.Builder()
-                .setUri(station.streamUrl)
+                .setUri(station.streamUrl.trim())
+                .apply {
+                    if (mimeType != null) {
+                        setMimeType(mimeType)
+                    }
+                }
                 .setMediaMetadata(metadata)
                 .build()
 
             exo.setMediaItem(mediaItem)
             exo.prepare()
             exo.play()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             _errorMessage.value = "Falha ao iniciar rádio: ${e.localizedMessage}"
         }
     }
 
-    private fun playStreamUrl(url: String, title: String) {
+    private fun playBackupStation(station: RadioStation) {
         val exo = player ?: return
+        val backupUrl = station.backupStreamUrl?.trim()
+        if (backupUrl.isNullOrEmpty()) {
+            _errorMessage.value = "Emissora temporariamente indisponível."
+            return
+        }
         try {
+            val mimeType = when {
+                backupUrl.contains(".m3u8", ignoreCase = true) -> MimeTypes.APPLICATION_M3U8
+                backupUrl.contains(".mpd", ignoreCase = true) -> MimeTypes.APPLICATION_MPD
+                backupUrl.contains(".aac", ignoreCase = true) -> MimeTypes.AUDIO_AAC
+                backupUrl.contains(".mp3", ignoreCase = true) -> MimeTypes.AUDIO_MPEG
+                else -> null
+            }
+            val metadata = MediaMetadata.Builder()
+                .setTitle(station.name)
+                .setArtist("${station.dial} • Sinal Secundário")
+                .setDisplayTitle(station.name)
+                .setSubtitle(station.currentShow)
+                .build()
             val mediaItem = MediaItem.Builder()
-                .setUri(url)
-                .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
+                .setUri(backupUrl)
+                .apply {
+                    if (mimeType != null) {
+                        setMimeType(mimeType)
+                    }
+                }
+                .setMediaMetadata(metadata)
                 .build()
             exo.setMediaItem(mediaItem)
             exo.prepare()
             exo.play()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {
+            _errorMessage.value = "Emissora temporariamente indisponível."
+        }
     }
 
     private fun playNextStation(forward: Boolean) {

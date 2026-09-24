@@ -9,27 +9,9 @@ object ChannelsData {
 
     val defaultChannels: List<TvChannel> = listOf(
         TvChannel(
-            id = "sbt_news",
-            name = "SBT News",
-            number = "1.1",
-            category = ChannelCategory.NOTICIAS,
-            protocol = StreamProtocol.HLS_M3U8,
-            streamUrl = "https://dai.google.com/linear/hls/event/1XSOdtQ0SH2G8OEmEfGgjQ/master.m3u8",
-            youtubeId = "live_sbtnews_stream",
-            logoText = "SBT",
-            accentColorHex = 0xFFFF6D00,
-            state = "Nacional",
-            resolution = "1080p FHD",
-            description = "Canal de notícias 24 horas do SBT com transmissões ao vivo, coberturas especiais e análises.",
-            websiteUrl = "https://sbtnews.com.br",
-            currentProgram = "Poder Expresso Ao Vivo",
-            currentProgramTime = "17:00 - 18:30",
-            progressPercent = 0.80f
-        ),
-        TvChannel(
             id = "tv_cultura",
             name = "TV Cultura",
-            number = "2.1",
+            number = "1.1",
             category = ChannelCategory.CULTURA,
             protocol = StreamProtocol.HLS_M3U8,
             streamUrl = "https://fpa-gateway.tvcultura.com.br:8181/memfs/606caef0-a290-413d-9f1f-8fcdb3a73831.m3u8",
@@ -47,7 +29,7 @@ object ChannelsData {
         TvChannel(
             id = "tv_brasil",
             name = "TV Brasil",
-            number = "3.1",
+            number = "2.1",
             category = ChannelCategory.CULTURA,
             protocol = StreamProtocol.HLS_M3U8,
             streamUrl = "http://45.162.64.114/TV_BRASIL/index.m3u8",
@@ -61,6 +43,24 @@ object ChannelsData {
             currentProgram = "Repórter Brasil Noite",
             currentProgramTime = "19:00 - 20:00",
             progressPercent = 0.65f
+        ),
+        TvChannel(
+            id = "sbt_news",
+            name = "SBT News",
+            number = "3.1",
+            category = ChannelCategory.NOTICIAS,
+            protocol = StreamProtocol.WEB_EMBED,
+            streamUrl = "https://sbtnews.sbt.com.br/ao-vivo",
+            youtubeId = "live_sbtnews_stream",
+            logoText = "SBT",
+            accentColorHex = 0xFFFF6D00,
+            state = "Nacional",
+            resolution = "1080p FHD",
+            description = "Canal de notícias 24 horas do SBT com transmissões ao vivo, coberturas especiais e análises.",
+            websiteUrl = "https://sbtnews.sbt.com.br",
+            currentProgram = "Poder Expresso Ao Vivo",
+            currentProgramTime = "17:00 - 18:30",
+            progressPercent = 0.80f
         ),
         TvChannel(
             id = "record_news",

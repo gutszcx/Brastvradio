@@ -325,8 +325,11 @@ private fun ExoPlayerContainer(
 
                 hasError = true
                 isBuffering = false
+                val httpEx = error.cause as? androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
                 errorMessage = when {
                     !isNetworkConnected(context) -> "Sem conexão com a internet."
+                    httpEx != null && httpEx.responseCode == 404 -> "Sinal ao vivo indisponível neste servidor (404). Alterne para Modo Web ou outro canal."
+                    httpEx != null -> "Servidor da emissora retornou código ${httpEx.responseCode}."
                     error.cause is java.net.UnknownHostException -> "Sinal temporariamente fora do ar."
                     error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> "Falha na conexão com a emissora."
                     error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "Tempo de resposta esgotado."
