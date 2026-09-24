@@ -12,12 +12,29 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Gerar APK
+      - name: Gerar APK BrasTVRadio
         run: |
-          npm install
+          # Cria package.json se não existir
+          if [! -f package.json ]; then
+            echo '{"name":"brastvradio","version":"1.0.0","scripts":{"build":"echo ok"}}' > package.json
+          fi
+          # Instala Capacitor
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npm run build || npx vite build || true
-          npx cap init BrasTVRadio com.brastv.radio --web-dir=dist || true
+          # Cria pasta www com seu site
+          mkdir -p www
+          # Se tiver index.html na raiz, copia
+          cp -r *.html www/ 2>/dev/null || true
+          cp -r *.js www/ 2>/dev/null || true
+          cp -r *.css www/ 2>/dev/null || true
+          cp -r assets www/ 2>/dev/null || true
+          cp -r css www/ 2>/dev/null || true
+          cp -r js www/ 2>/dev/null || true
+          # Se não tiver nada, cria um index que abre seu site
+          if [! -f www/index.html ]; then
+            echo '<html><head><meta http-equiv="refresh" content="0; url=https://gutsZCX.github.io/Brastvradio/"></head><body>Carregando BrasTVRadio...</body></html>' > www/index.html
+          fi
+          # Inicia Capacitor
+          npx cap init BrasTVRadio com.brastvradio.app --web-dir=www || true
           npx cap add android || true
           npx cap copy android || true
           cd android
