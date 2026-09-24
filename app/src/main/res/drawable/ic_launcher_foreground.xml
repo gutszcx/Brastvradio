@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Antennas -->
+    <path
+        android:pathData="M44,28 L35,18 M64,28 L73,18"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FFD700"
+        android:strokeLineCap="round" />
+
+    <!-- TV Frame Body -->
+    <path
+        android:pathData="M24,30 C20.7,30 18,32.7 18,36 L18,74 C18,77.3 20.7,80 24,80 L84,80 C87.3,80 90,77.3 90,74 L90,36 C90,32.7 87.3,30 84,30 Z"
+        android:fillColor="#162238"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E676" />
+
+    <!-- TV Screen Inner -->
+    <path
+        android:pathData="M22,34 C22,32.9 22.9,32 24,32 L84,32 C85.1,32 86,32.9 86,34 L86,72 C86,73.1 85.1,74 84,74 L24,74 C22.9,74 22,73.1 22,72 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="22"
+                android:startY="32"
+                android:endX="86"
+                android:endY="74"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00182E" />
+                <item android:offset="1.0" android:color="#003B2A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- TV Stand -->
+    <path
+        android:pathData="M46,80 L44,88 L64,88 L62,80 Z"
+        android:fillColor="#FFD700" />
+    <path
+        android:pathData="M38,88 L70,88"
+        android:strokeWidth="3"
+        android:strokeColor="#FFD700"
+        android:strokeLineCap="round" />
+
+    <!-- Brazilian Flag Lozange / Play Triangle in screen -->
+    <!-- Lozenge Accent -->
+    <path
+        android:pathData="M54,40 L69,53 L54,66 L39,53 Z"
+        android:fillColor="#22FFD700"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700" />
+
+    <!-- Play Triangle -->
+    <path
+        android:pathData="M50,45 L62,53 L50,61 Z"
+        android:fillColor="#00E676" />
+
+    <!-- Live indicator badge / Cast waves -->
+    <path
+        android:pathData="M78,38 A4,4 0 1,1 77.9,38 Z"
+        android:fillColor="#FF1744" />
+</vector>

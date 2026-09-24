@@ -1,0 +1,6 @@
+{
+  "name": "Brasil TV Aberta",
+  "description": "Canais de TV do Brasil e Rádios Web de todos os gêneros com reprodução em segundo plano e tela bloqueada, guia EPG, player HD e anúncios AdMob discretos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

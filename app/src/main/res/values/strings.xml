@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Brasil TV Aberta</string>
+    <string name="channel_guide">Guia de Programação</string>
+    <string name="search_channels">Buscar canais ou programas...</string>
+    <string name="cast_to_tv">Transmitir para Chromecast / TV</string>
+    <string name="favorites">Favoritos</string>
+    <string name="all_channels">Todos os Canais</string>
+    <string name="categories">Categorias</string>
+    <string name="now_playing">No Ar Agora</string>
+    <string name="next_programs">A Seguir</string>
+</resources>
