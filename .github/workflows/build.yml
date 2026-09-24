@@ -22,7 +22,7 @@ jobs:
           npx cap copy android || true
           cd android
           chmod +x gradlew
-         ./gradlew assembleDebug
+          ./gradlew assembleDebug
       - name: Salvar APK
         uses: actions/upload-artifact@v4
         with:
