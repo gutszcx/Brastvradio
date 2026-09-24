@@ -9,29 +9,36 @@ jobs:
         with:
           java-version: '17'
           distribution: temurin
-      - name: Build APK BrasTVRadio
+      - name: Criar APK BrasTVRadio
         run: |
-          mkdir -p /tmp/brastv && cd /tmp/brastv
-          cat > MainActivity.java <<'JAVA'
-          package com.brastvradio.app;
-          import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebViewClient;
-          public class MainActivity extends Activity {
-            protected void onCreate(Bundle b){ super.onCreate(b);
-            WebView w=new WebView(this); w.getSettings().setJavaScriptEnabled(true);
-            w.setWebViewClient(new WebViewClient()); w.loadUrl("https://gutszcx.github.io/Brastvradio/"); setContentView(w); } }
-          JAVA
-          echo "FEITO"
-      - name: Criar APK com PWABuilder
-        run: |
-          npm install -g @bubblewrap/cli
-          mkdir -p /tmp/pwa && cd /tmp/pwa
-          echo '{"host":"gutszcx.github.io","name":"BrasTVRadio","packageId":"com.brastvradio.app","display":"standalone","startUrl":"/Brastvradio/"}' > twa-manifest.json
-          bubblewrap build --skipPwaValidation || echo "tentando outro metodo"
-      - name: Fallback WebView APK
-        run: |
-          sudo apt-get update && sudo apt-get install -y gradle
-          mkdir -p $HOME/app/android/app/src/main/java/com/brastvradio/app
-          mkdir -p $HOME/app/android/app/src/main/res
-          cd $HOME/app
-          cp -r $GITHUB_WORKSPACE/*. 2>/dev/null || true
-          ls -la
+          mkdir -p android/app/src/main/java/com/brastvradio/app
+          mkdir -p android/app/src/main/res/values
+          echo "include ':app'" > android/settings.gradle
+          cat > android/build.gradle <<'EOF'
+          buildscript{repositories{google();mavenCentral()}dependencies{classpath 'com.android.tools.build:gradle:8.1.0'}}
+          allprojects{repositories{google();mavenCentral()}}
+          EOF
+          cat > android/app/build.gradle <<'EOF'
+          plugins{id 'com.android.application'}
+          android{compileSdk 34;namespace 'com.brastvradio.app';defaultConfig{applicationId "com.brastvradio.app";minSdk 21;targetSdk 34;versionCode 1;versionName "1.0"}buildTypes{release{minifyEnabled false}debug{minifyEnabled false}}}
+          dependencies{implementation 'androidx.appcompat:appcompat:1.6.1'}
+          EOF
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="BrasTVRadio" android:theme="@android:style/Theme.NoTitleBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>
+          EOF
+          cat > android/app/src/main/java/com/brastvradio/app/MainActivity.java <<'EOF'
+          package com.brastvradio.app; import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebViewClient;
+          public class MainActivity extends Activity{protected void onCreate(Bundle b){super.onCreate(b);WebView w=new WebView(this);w.getSettings().setJavaScriptEnabled(true);w.setWebViewClient(new WebViewClient());w.loadUrl("https://gutszcx.github.io/Brastvradio/");setContentView(w);}}
+          EOF
+          echo "android.useAndroidX=true" > android/gradle.properties
+          cd android
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
+          unzip -q gradle-8.4-bin.zip
+          ./gradle-8.4/bin/gradle wrapper
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - name: Salvar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BrasTVRadio-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
